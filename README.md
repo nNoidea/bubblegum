@@ -34,17 +34,6 @@ A unified package manager GUI for Linux. Bubblegum gives you a single dashboard 
 | Cargo   |    ✅    |    —    |     —     | Read-only listing                    |
 | npm     |    ✅    |    —    |     —     | Read-only listing                    |
 
-## Tech Stack
-
-- **Backend** — Rust + [Tauri v2](https://v2.tauri.app/)
-- **Frontend** — React 19 · TypeScript · TailwindCSS v4 · Zustand · React Router
-- **Privilege escalation** — `pkexec` (Polkit) for operations that need root
-- **Build tool** — Vite 7
-
-## Screenshots
-
-<!-- Add screenshots here -->
-
 ## Getting Started
 
 ### Prerequisites
@@ -86,23 +75,6 @@ cargo tauri dev
 # Output: dist/bubblegum
 ```
 
-## Project Structure
-
-```
-bubblegum/                  ← Tauri project root
-├── src/                    ← React frontend
-│   ├── pages/              ← Overview · Search · Updates
-│   ├── components/         ← PackageCard · TerminalPanel · …
-│   ├── store.ts            ← Zustand state management
-│   └── types.ts            ← Shared TypeScript types
-├── src-tauri/              ← Rust backend
-│   ├── src/lib.rs          ← Tauri commands (stream, update, uninstall, …)
-│   └── src/managers/       ← Per-manager modules (apt, dnf, flatpak, …)
-├── public/                 ← Static assets
-box/                        ← Distrobox container home (gitignored)
-run.sh                      ← Dev launcher script
-```
-
 ## Development
 
 | Command             | Description                        |
@@ -112,15 +84,6 @@ run.sh                      ← Dev launcher script
 | `cargo tauri dev`   | Dev mode (inside container/manual) |
 | `cargo tauri build` | Release build (inside container)   |
 | `npm run dev`       | Frontend-only dev server           |
-
-## Security
-
-- All subprocess calls use argument arrays — no shell interpretation
-- stdin is nulled on every spawned process to prevent interactive prompts
-- Package names are validated to prevent argument injection (`--` separators, reject names starting with `-`)
-- CSP restricts frontend to `self` origins only
-- Tauri capabilities are locked to the minimum required set
-- Privilege escalation uses `pkexec` — the app never handles passwords directly
 
 ## Contributing
 
