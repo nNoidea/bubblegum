@@ -561,7 +561,13 @@ fn get_batch_uninstall_command(manager_id: String, pkg_ids: Vec<String>) -> Stri
         "apt"     => format!("pkexec apt-get remove -y -- {}", joined),
         "dnf"     => format!("pkexec dnf remove -y -- {}", joined),
         "flatpak" => format!("flatpak uninstall -y -- {}", joined),
-        "pacman"  => format!("pkexec pacman -R --noconfirm -- {}", joined),
+        "pacman"  => {
+            // AUR helpers can uninstall any pacman package (official + AUR)
+            match managers::pacman::detect_aur_helper() {
+                Some(helper) => format!("{} -R --noconfirm -- {}", helper, joined),
+                None         => format!("pkexec pacman -R --noconfirm -- {}", joined),
+            }
+        }
         "snap"    => format!("pkexec snap remove {}", joined),
         "nix"     => format!("nix-env -e {}", joined),
         "cargo"   => format!("cargo uninstall {}", joined),
@@ -578,7 +584,14 @@ fn get_update_command(manager_id: String) -> String {
         "apt"     => "pkexec apt-get upgrade -y".into(),
         "dnf"     => "pkexec dnf upgrade --refresh -y".into(),
         "flatpak" => "flatpak update -y".into(),
-        "pacman"  => "pkexec pacman -Syu --noconfirm".into(),
+        "pacman"  => {
+            // If an AUR helper is available, use it to update everything
+            // (official repos + AUR in one shot)
+            match managers::pacman::detect_aur_helper() {
+                Some(helper) => format!("{} -Syu --noconfirm", helper),
+                None         => "pkexec pacman -Syu --noconfirm".into(),
+            }
+        }
         "snap"    => "pkexec snap refresh".into(),
         "nix"     => "nix-env -u '*'".into(),
         _         => format!("# Unknown manager: {}", manager_id),
@@ -673,11 +686,19 @@ async fn execute_update(
         let host_mgr = manager_id == "dnf";
 
         // Base command: first element is the program, rest are args
+        // For pacman: use AUR helper (paru/yay) if available — it handles
+        // both official repos and AUR in a single invocation, no pkexec needed.
         let base: Vec<&str> = match manager_id.as_str() {
             "apt"     => vec!["pkexec", "apt-get", "upgrade", "-y"],
             "dnf"     => vec!["pkexec", "dnf", "upgrade", "--refresh", "-y"],
             "flatpak" => vec!["flatpak", "update", "-y"],
-            "pacman"  => vec!["pkexec", "pacman", "-Syu", "--noconfirm"],
+            "pacman"  => {
+                match managers::pacman::detect_aur_helper() {
+                    Some("paru") => vec!["paru", "-Syu", "--noconfirm"],
+                    Some("yay")  => vec!["yay", "-Syu", "--noconfirm"],
+                    _            => vec!["pkexec", "pacman", "-Syu", "--noconfirm"],
+                }
+            }
             "snap"    => vec!["pkexec", "snap", "refresh"],
             "nix"     => vec!["nix-env", "-u", "*"],
             _         => unreachable!(),
@@ -753,7 +774,13 @@ async fn execute_batch_uninstall(
             "apt"     => vec!["pkexec", "apt-get", "remove", "-y"],
             "dnf"     => vec!["pkexec", "dnf", "remove", "-y"],
             "flatpak" => vec!["flatpak", "uninstall", "-y"],
-            "pacman"  => vec!["pkexec", "pacman", "-R", "--noconfirm"],
+            "pacman"  => {
+                match managers::pacman::detect_aur_helper() {
+                    Some("paru") => vec!["paru", "-R", "--noconfirm"],
+                    Some("yay")  => vec!["yay", "-R", "--noconfirm"],
+                    _            => vec!["pkexec", "pacman", "-R", "--noconfirm"],
+                }
+            }
             "snap"    => vec!["pkexec", "snap", "remove"],
             "nix"     => vec!["nix-env", "-e"],
             "cargo"   => vec!["cargo", "uninstall"],

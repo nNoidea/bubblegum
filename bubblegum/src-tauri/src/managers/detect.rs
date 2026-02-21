@@ -44,7 +44,15 @@ pub fn detect_managers() -> Vec<ManagerInfo> {
         // ── Pacman ────────────────────────────────────────────────────────────
         ManagerInfo {
             id: "pacman".into(),
-            name: "Pacman".into(),
+            name: {
+                // Show AUR helper in the display name if detected
+                let base = "Pacman";
+                match super::pacman::detect_aur_helper() {
+                    Some("paru") => format!("{} + paru (AUR)", base),
+                    Some("yay")  => format!("{} + yay (AUR)", base),
+                    _            => base.to_string(),
+                }
+            },
             available: cmd_exists("pacman"),
             version: get_version("pacman", &["--version"]),
             color: "#1793D1".into(),

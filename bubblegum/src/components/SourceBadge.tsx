@@ -87,8 +87,10 @@ function classifySource(source: string): SourceStyle {
     if (s === "nixpkgs-unstable") return { label: "nixpkgs-unstable", color: "#5b9bd5", bg: "#5b9bd518" };
     if (s.startsWith("nur")) return { label: "NUR", color: "#7EBAE4", bg: "#7EBAE418" };
 
-    // Pacman repos
-    if (s === "core" || s === "extra" || s === "community") return { label: s, color: "#1793D1", bg: "#1793D118" };
+    // Pacman / Arch repos
+    if (s === "core") return { label: "Core", color: "#1793D1", bg: "#1793D118" };
+    if (s === "extra") return { label: "Extra", color: "#2ea7e7", bg: "#2ea7e718" };
+    if (s === "multilib") return { label: "Multilib", color: "#3bb8f0", bg: "#3bb8f018" };
     if (s === "aur") return { label: "AUR", color: "#1793D1", bg: "#1793D118" };
 
     // Locally installed / unknown

@@ -12,6 +12,12 @@ const PAGE_SIZE = 48;
 // ─── Source grouping ──────────────────────────────────────────────────────────
 const SOURCE_GROUP_LABELS: Record<string, string> = {
     official: "Official",
+    // Arch repos
+    core: "Core",
+    extra: "Extra",
+    multilib: "Multilib",
+    aur: "AUR",
+    // Fedora / RPM repos
     community: "Community",
     flathub: "Flathub",
     copr: "COPR",
@@ -23,10 +29,16 @@ const SOURCE_GROUP_LABELS: Record<string, string> = {
     other: "Other",
 };
 
-const SOURCE_GROUP_ORDER = ["official", "flathub", "community", "copr", "rpmfusion", "third-party", "proprietary", "restricted", "local"];
+const SOURCE_GROUP_ORDER = ["official", "core", "extra", "multilib", "aur", "flathub", "community", "copr", "rpmfusion", "third-party", "proprietary", "restricted", "local"];
 
 function getSourceGroup(source?: string | null): string {
     if (!source) return "other";
+    // Arch Linux repos
+    if (source === "core") return "core";
+    if (source === "extra") return "extra";
+    if (source === "multilib") return "multilib";
+    if (source === "aur") return "aur";
+    // Generic / Fedora
     if (source === "official") return "official";
     if (source === "community") return "community";
     if (source === "proprietary") return "proprietary";
@@ -643,7 +655,6 @@ export function Overview() {
                                     {label}
                                 </button>
                             ))}
-
                         </div>
                     </div>
                 )}

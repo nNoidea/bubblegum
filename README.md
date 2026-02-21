@@ -3,13 +3,14 @@
 A unified package manager GUI for Linux. Bubblegum gives you a single dashboard to browse, search, update, and uninstall packages across every package manager on your system.
 
 ![Tauri v2](https://img.shields.io/badge/Tauri-v2-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
+![License](https://img.shields.io/badge/license-AGPL--3.0-red)
 ![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)
 
 ## Features
 
 - **Unified view** — See every installed package in one place, grouped by source
 - **Multi-manager support** — apt, dnf, flatpak, pacman, snap, nix, cargo, npm
+- **Arch Linux & AUR** — Classifies packages by repo (core/extra/multilib/AUR); uses paru/yay for AUR updates
 - **Live streaming** — Package lists and updates stream in progressively (no frozen UI)
 - **Bulk updates** — Update all packages per manager with a single click; firmware updates via fwupd
 - **Batch uninstall** — Stage packages for removal and review the command before running it
@@ -19,16 +20,17 @@ A unified package manager GUI for Linux. Bubblegum gives you a single dashboard 
 
 ## Supported Package Managers
 
-| Manager  | Packages | Updates | Uninstall |
-| -------- | :------: | :-----: | :-------: |
-| APT      |    ✅    |   ✅    |    ✅     |
-| DNF/RPM  |    ✅    |   ✅    |    ✅     |
-| Flatpak  |    ✅    |   ✅    |    ✅     |
-| Pacman   |    ✅    |   ✅    |    ✅     |
-| Snap     |    ✅    |   ✅    |    ✅     |
-| Nix      |    ✅    |   ✅    |    ✅     |
-| Cargo    |    ✅    |   —     |    —      |
-| npm      |    ✅    |   —     |    —      |
+| Manager | Packages | Updates | Uninstall | Notes                                |
+| ------- | :------: | :-----: | :-------: | ------------------------------------ |
+| APT     |    ✅    |   ✅    |    ✅     | Debian / Ubuntu                      |
+| DNF/RPM |    ✅    |   ✅    |    ✅     | Fedora / RHEL                        |
+| Pacman  |    ✅    |   ✅    |    ✅     | Arch Linux (core / extra / multilib) |
+| AUR     |    ✅    |   ✅    |    ✅     | Via paru or yay                      |
+| Flatpak |    ✅    |   ✅    |    ✅     |                                      |
+| Snap    |    ✅    |   ✅    |    ✅     |                                      |
+| Nix     |    ✅    |   ✅    |    ✅     |                                      |
+| Cargo   |    ✅    |    —    |     —     | Read-only listing                    |
+| npm     |    ✅    |    —    |     —     | Read-only listing                    |
 
 ## Tech Stack
 
@@ -101,13 +103,13 @@ run.sh                      ← Dev launcher script
 
 ## Development
 
-| Command              | Description                          |
-| -------------------- | ------------------------------------ |
-| `./run.sh --dev`     | Hot-reload dev mode via distrobox    |
-| `./run.sh --build`   | Release build via distrobox          |
-| `cargo tauri dev`    | Dev mode (inside container/manual)   |
-| `cargo tauri build`  | Release build (inside container)     |
-| `npm run dev`        | Frontend-only dev server             |
+| Command             | Description                        |
+| ------------------- | ---------------------------------- |
+| `./run.sh --dev`    | Hot-reload dev mode via distrobox  |
+| `./run.sh --build`  | Release build via distrobox        |
+| `cargo tauri dev`   | Dev mode (inside container/manual) |
+| `cargo tauri build` | Release build (inside container)   |
+| `npm run dev`       | Frontend-only dev server           |
 
 ## Security
 
@@ -124,4 +126,4 @@ Contributions are welcome! Please open an issue first to discuss what you'd like
 
 ## License
 
-[MIT](LICENSE)
+[AGPL-3.0](LICENSE)
