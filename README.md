@@ -54,8 +54,8 @@ distrobox create --name bubblegum --image ubuntu:24.04 --home ./box
 distrobox enter bubblegum
 ./box/setup-dev-env.sh
 
-# 3. Back on the host — launch dev mode
-./run.sh --dev
+# 3. Build it
+./run.sh --build
 ```
 
 ### Manual Setup (no container)
@@ -65,14 +65,9 @@ If you already have the Tauri v2 prerequisites installed:
 ```bash
 cd bubblegum
 npm install
-cargo tauri dev
-```
-
-### Building a Release Binary
-
-```bash
-./run.sh --build
-# Output: dist/bubblegum
+npm run tauri build -- --no-bundle
+# or cargo tauri dev
+# Binary: src-tauri/target/release/bubblegum
 ```
 
 ## Development
