@@ -1,6 +1,6 @@
 # 🫧 Bubblegum
 
-![Bubblegum](app.png)
+![Bubblegum](img/app.png)
 
 A unified package manager GUI for Linux. Bubblegum gives you a single dashboard to browse, search, update, and uninstall packages across every package manager on your system.
 
