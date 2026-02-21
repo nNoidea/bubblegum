@@ -1,0 +1,136 @@
+@import "tailwindcss";
+
+@theme {
+    /* ── GNOME-inspired flat palette ────────────────────────────── */
+    --color-bg: #1c1c2e;
+    --color-surface: #232336;
+    --color-card: #2a2a3f;
+    --color-card-hover: #313153;
+    --color-border: #3d3d5a;
+    --color-muted: #6e6e8e;
+    --color-text: #e2e0ef;
+    --color-subtext: #a0a0be;
+
+    /* ── Flat accents ──────────────────────────────────────────── */
+    --color-purple: #9141ac;
+    --color-blue: #3584e4;
+    --color-green: #26a269;
+    --color-red: #e01b24;
+    --color-orange: #e66100;
+    --color-teal: #2190a4;
+
+    /* ── Manager brand colors (flat, not neon) ──────────────────── */
+    --color-flatpak: #2190a4;
+    --color-dnf: #3584e4;
+    --color-apt: #c4402e;
+    --color-pacman: #1c71d8;
+    --color-snap: #c7561e;
+    --color-nix: #5e81ac;
+    --color-brew: #a86e00;
+    --color-cargo: #b5390e;
+    --color-pip: #3a75b5;
+    --color-npm: #a01010;
+
+    --radius-card: 12px;
+    --radius-badge: 6px;
+}
+
+html,
+body,
+#root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Cantarell, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    /* Promote entire app to a GPU compositing layer */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────────── */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) var(--color-surface);
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-surface);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-muted);
+}
+
+/* ── Flat card surface ──────────────────────────────────────────── */
+.flat-card {
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    /* Skip rendering off-screen cards — frees main-thread budget per frame,
+       the single biggest win for smooth 120Hz scrolling through long lists.
+       contain-intrinsic-size gives the scroll engine an estimated card height
+       so the scrollbar stays accurate before the card is rendered. */
+    content-visibility: auto;
+    contain-intrinsic-size: 0 108px;
+}
+
+.flat-card:hover {
+    background: var(--color-card-hover);
+    border-color: #505070;
+}
+
+/* ── Skeleton pulse ─────────────────────────────────────────────────── */
+@keyframes skeleton-pulse {
+
+    0%,
+    100% {
+        opacity: 0.4;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.skeleton-pulse {
+    animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+/* ── Scrollable rows with hidden scrollbar ──────────────────────── */
+.scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+    display: none;
+}
+
+/* ── GPU-accelerated scroll containers ──────────────────────────── */
+/* Promotes scroll viewports to their own compositor layer so the GPU
+   can handle scrolling at the display's native refresh rate (120Hz). */
+.overflow-y-scroll,
+.overflow-y-auto,
+.overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    will-change: scroll-position;
+}
+
+/* ── High-frequency input / animation target hint ───────────────── */
+/* Elements that receive hover transitions get their own GPU layer
+   so color/opacity changes skip the main thread entirely. */
+.flat-card {
+    will-change: background-color;
+}
