@@ -19,7 +19,7 @@ export interface StagedUninstall {
 
 // Canonical list that mirrors SUPPORTED_MANAGER_IDS in detect.rs.
 // Used to pre-populate loadingManagers so the UI shows all spinners immediately.
-export const ALL_MANAGER_IDS = ["apt", "dnf", "flatpak", "pacman", "snap", "nix", "cargo", "npm"];
+export const ALL_MANAGER_IDS = ["apt", "dnf", "flatpak", "pacman", "snap", "nix", "cargo", "npm", "local"];
 
 // ─── Stream lifecycle helpers ─────────────────────────────────────────────────
 // We maintain module-level listener handles (not Zustand state) so they can be
@@ -116,6 +116,7 @@ interface AppState {
     stageUninstall: (manager: string, pkgId: string, displayName: string) => void;
     unstageCommand: (index: number) => void;
     clearTerminalOutput: () => void;
+    addTerminalInfo: (text: string) => void;
     executeTerminalCommands: () => Promise<void>;
 }
 
@@ -540,6 +541,11 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     clearTerminalOutput: () => {
         set({ terminalOutput: [] });
+    },
+    addTerminalInfo: (text: string) => {
+        set((state) => ({
+            terminalOutput: [...state.terminalOutput, { kind: "info", text }],
+        }));
     },
 
     executeTerminalCommands: async () => {

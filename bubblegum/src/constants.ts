@@ -14,6 +14,7 @@ export const MANAGER_COLORS: Record<string, string> = {
     cargo: "#b5390e",
     pip: "#3a75b5",
     npm: "#a01010",
+    local: "#666666",
 };
 
 export const MANAGER_EMOJIS: Record<string, string> = {
@@ -27,4 +28,5 @@ export const MANAGER_EMOJIS: Record<string, string> = {
     cargo: "🦀",
     pip: "🐍",
     npm: "📦",
+    local: "🏠",
 };

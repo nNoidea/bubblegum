@@ -9,6 +9,7 @@ pub mod nix;
 pub mod npm_mgr;
 pub mod pacman;
 pub mod snap;
+pub mod local;
 
 /// Represents an installed or searchable package
 #[derive(Debug, Clone, Serialize, Deserialize)]

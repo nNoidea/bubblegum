@@ -24,13 +24,18 @@ function getManagedStatus(manager: string, source?: string | null): { label: str
 
 export function PackageCard({ pkg }: PackageCardProps) {
     const stageUninstall = useAppStore((s) => s.stageUninstall);
+    const addTerminalInfo = useAppStore((s) => s.addTerminalInfo);
     const [staged, setStaged] = useState(false);
     const [copied, setCopied] = useState(false);
-
+ 
     const color = MANAGER_COLORS[pkg.manager] ?? "#6B6B8A";
-
+ 
     async function handleStageUninstall(e: React.MouseEvent) {
         e.stopPropagation();
+        if (pkg.manager === "local") {
+            addTerminalInfo("This app is not installed via a package manager, you need to figure out self how to uninstall it.");
+            return;
+        }
         stageUninstall(pkg.manager, pkg.id, pkg.name);
         setStaged(true);
         setTimeout(() => setStaged(false), 2000);

@@ -97,6 +97,7 @@ async fn stream_packages(
                 "nix"     => managers::nix::get_packages(user_mode),
                 "cargo"   => managers::cargo_mgr::get_packages(user_mode),
                 "npm"     => managers::npm_mgr::get_packages(user_mode),
+                "local"   => managers::local::get_packages(user_mode),
                 _         => vec![],
             };
 
@@ -572,6 +573,7 @@ fn get_batch_uninstall_command(manager_id: String, pkg_ids: Vec<String>) -> Stri
         "nix"     => format!("nix-env -e {}", joined),
         "cargo"   => format!("cargo uninstall {}", joined),
         "npm"     => format!("npm uninstall -g {}", joined),
+        "local"   => format!("# Manual uninstallation required for: {}", joined),
         _         => format!("# Unknown manager: {}", manager_id),
     }
 }
@@ -675,7 +677,7 @@ async fn execute_update(
     use std::thread;
 
     // Validate manager_id against known list
-    let valid = ["apt", "dnf", "flatpak", "pacman", "snap", "nix"];
+    let valid = ["apt", "dnf", "flatpak", "pacman", "snap", "nix", "local"];
     if !valid.contains(&manager_id.as_str()) {
         return Err(format!("Unknown manager: {}", manager_id));
     }
@@ -701,6 +703,15 @@ async fn execute_update(
             }
             "snap"    => vec!["pkexec", "snap", "refresh"],
             "nix"     => vec!["nix-env", "-u", "*"],
+            "local"   => {
+                let _ = app.emit("terminal::line", TerminalLine {
+                    request_id: request_id.clone(),
+                    text: "Local apps do not support updates via Bubblegum.".into(),
+                    is_stderr: false,
+                });
+                let _ = app.emit("terminal::done", TerminalDone { request_id, exit_code: 0 });
+                return;
+            }
             _         => unreachable!(),
         };
 
@@ -729,7 +740,7 @@ async fn execute_batch_uninstall(
 ) -> Result<(), String> {
     use std::thread;
 
-    let valid = ["apt", "dnf", "flatpak", "pacman", "snap", "nix", "cargo", "npm"];
+    let valid = ["apt", "dnf", "flatpak", "pacman", "snap", "nix", "cargo", "npm", "local"];
     if !valid.contains(&manager_id.as_str()) {
         return Err(format!("Unknown manager: {}", manager_id));
     }
@@ -785,6 +796,15 @@ async fn execute_batch_uninstall(
             "nix"     => vec!["nix-env", "-e"],
             "cargo"   => vec!["cargo", "uninstall"],
             "npm"     => vec!["npm", "uninstall", "-g"],
+            "local"   => {
+                let _ = app.emit("terminal::line", TerminalLine {
+                    request_id: request_id.clone(),
+                    text: "This app is not installed via a package manager, you need to figure out self how to uninstall it.".into(),
+                    is_stderr: false,
+                });
+                let _ = app.emit("terminal::done", TerminalDone { request_id, exit_code: 0 });
+                return;
+            }
             _         => unreachable!(),
         };
 

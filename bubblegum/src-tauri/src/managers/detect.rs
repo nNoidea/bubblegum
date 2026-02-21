@@ -4,7 +4,7 @@ use super::{cmd_exists, host_cmd_exists, ManagerInfo};
 /// This list is the single source of truth — it must stay in sync with
 /// the match arms in `lib.rs` (stream_packages / stream_updates).
 pub const SUPPORTED_MANAGER_IDS: &[&str] =
-    &["apt", "dnf", "flatpak", "pacman", "snap", "nix", "cargo", "npm"];
+    &["apt", "dnf", "flatpak", "pacman", "snap", "nix", "cargo", "npm", "local"];
 
 /// Detect all package managers available on this system.
 /// Only managers with full implementations are included here.
@@ -97,6 +97,15 @@ pub fn detect_managers() -> Vec<ManagerInfo> {
             version: get_version("npm", &["--version"]),
             color: "#CB3837".into(),
             emoji: "📦".into(),
+        },
+        // ── Local ─────────────────────────────────────────────────────────────
+        ManagerInfo {
+            id: "local".into(),
+            name: "Local Apps".into(),
+            available: true,
+            version: None,
+            color: "#999999".into(),
+            emoji: "🏠".into(),
         },
     ]
 }
