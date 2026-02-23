@@ -1,14 +1,23 @@
-use super::{run_cmd, Package};
+use super::{run_host_cmd, Package};
 
 /// List installed flatpaks
-pub fn get_packages(_user_mode: bool) -> Vec<Package> {
-    let out = run_cmd(
-        "flatpak",
+pub fn get_packages(user_mode: bool) -> Vec<Package> {
+    let args: &[&str] = if user_mode {
+        // --app: only real applications (no runtimes/extensions/themes/codecs)
+        // No --user scope filter — shows apps from all installation scopes
+        &[
+            "list",
+            "--app",
+            "--columns=application,name,version,branch,description,origin,installation",
+        ]
+    } else {
+        // system mode: show everything (apps + runtimes + extensions)
         &[
             "list",
             "--columns=application,name,version,branch,description,origin,installation",
-        ],
-    );
+        ]
+    };
+    let out = run_host_cmd("flatpak", args);
 
     out.lines()
         .filter_map(parse_flatpak_line)
@@ -69,7 +78,7 @@ fn guess_category_from_app_id(id: &str) -> Option<String> {
 /// Get pending flatpak updates
 pub fn get_updates() -> Vec<super::Update> {
     // list remotes that have updates
-    let out = run_cmd(
+    let out = run_host_cmd(
         "flatpak",
         &[
             "remote-ls",

@@ -22,11 +22,17 @@ export function AppIcon({ iconName, name, color, size = 48 }: AppIconProps) {
         });
     }, [iconName, resolveIcon]);
 
-    const initials = name
-        .split(/[\s\-_.]/)
-        .slice(0, 2)
-        .map((w) => w[0]?.toUpperCase() ?? "")
-        .join("");
+    const initials = (() => {
+        const first = name.match(/[a-zA-Z]/)?.[0]?.toUpperCase() ?? "";
+        const words = name.split(/\s+/);
+        let second = "";
+        for (let i = 1; i < words.length; i++) {
+            const ch = words[i].match(/[a-zA-Z]/)?.[0];
+            if (ch) { second = ch.toUpperCase(); break; }
+        }
+        return first + second;
+    })();
+
 
     if (src) {
         return (

@@ -36,8 +36,8 @@ pub fn detect_managers() -> Vec<ManagerInfo> {
         ManagerInfo {
             id: "flatpak".into(),
             name: "Flatpak".into(),
-            available: cmd_exists("flatpak"),
-            version: get_version("flatpak", &["--version"]),
+            available: host_cmd_exists("flatpak"),
+            version: get_host_version("flatpak", &["--version"]),
             color: "#00B4A0".into(),
             emoji: "📦".into(),
         },

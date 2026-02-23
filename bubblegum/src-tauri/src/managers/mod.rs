@@ -84,10 +84,16 @@ fn strip_ansi_codes(input: &str) -> String {
 /// Run a command and return stdout, or empty string on failure.
 /// ANSI escape codes are automatically stripped from the output.
 /// Errors are logged to stderr for debugging.
+///
+/// LD_LIBRARY_PATH is explicitly cleared before spawning so that when running
+/// inside a Tauri AppImage (which injects its own bundled libs into that var),
+/// host system binaries like `flatpak` or `rpm` don't link against the wrong
+/// libraries and crash or return empty output silently.
 pub fn run_cmd(prog: &str, args: &[&str]) -> String {
     match std::process::Command::new(prog)
         .args(args)
         .stdin(std::process::Stdio::null())
+        .env_remove("LD_LIBRARY_PATH")
         .output()
     {
         Ok(output) => {

@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 # run.sh — Launch Bubblegum inside the distrobox container.
-# Usage: ./run.sh [--dev | --build]
-#   --dev    (default) Hot-reload dev mode (cargo tauri dev)
-#   --build  Build a release binary/AppImage and copy it out
+# Usage: ./run.sh [--dev | --build | --appimage]
+#   --dev       (default) Hot-reload dev mode (cargo tauri dev)
+#   --build     Build a release binary (no bundle) and copy it to dist/
+#   --appimage  Build a distributable AppImage and copy it to dist/
+#
+# If the container doesn't exist it is bootstrapped automatically:
+#   1. Build base image from box/Dockerfile  (system apt deps — done once)
+#   2. Create the distrobox container with home dir = ./box/
+#   3. Run box/setup-dev-env.sh inside it   (Rust, nvm, Node, Tauri CLI)
 
 set -e
 
@@ -28,13 +34,54 @@ else
     )
 fi
 
-# ── Ensure the container is running ──────────────────────────────────────────
+# ── Auto-bootstrap ────────────────────────────────────────────────────────────
+IMAGE=bubblegum-dev
+DOCKERFILE="$BOX_HOME/Dockerfile"
+
+bootstrap_container() {
+    # 1. Build the base image only if not already present
+    if ! podman image exists "$IMAGE" 2>/dev/null; then
+        echo "🐳  Building base image '$IMAGE' from box/Dockerfile…"
+        echo "    (This only happens once — subsequent runs skip this step)"
+        podman build --tag "$IMAGE" --file "$DOCKERFILE" "$BOX_HOME"
+        echo "✅  Image '$IMAGE' built."
+    else
+        echo "✔   Image '$IMAGE' already present, skipping build."
+    fi
+
+    # 2. Create the distrobox container with home = ./box/
+    echo "📦  Creating distrobox container '$CONTAINER'…"
+    distrobox create \
+        --name "$CONTAINER" \
+        --image "$IMAGE" \
+        --home "$BOX_HOME" \
+        --yes
+
+    # 3. First-time distrobox initialisation (installs entrypoint, etc.)
+    echo "⚙️   Initialising container (distrobox first-run)…"
+    distrobox enter "$CONTAINER" -- true
+
+    # 4. Install Rust / nvm / Node.js / Tauri CLI into box/
+    echo "🦀  Running setup-dev-env.sh inside the container…"
+    echo "    (Installing Rust, nvm, Node.js, Tauri CLI — grab a coffee ☕)"
+    podman exec \
+        --user "$CURRENT_USER" \
+        --env "HOME=$BOX_HOME" \
+        "$CONTAINER" \
+        bash "$BOX_HOME/setup-dev-env.sh"
+
+    echo ""
+    echo "✅  Container '$CONTAINER' is ready!"
+}
+
+# ── Ensure the container exists and is running ────────────────────────────────
 STATUS=$(podman inspect --format '{{.State.Status}}' "$CONTAINER" 2>/dev/null || echo "missing")
 
 if [[ "$STATUS" == "missing" ]]; then
-    echo "❌  Container '$CONTAINER' not found."
-    echo "    Run the bootstrap steps in DEV_ENVIRONMENT.md first."
-    exit 1
+    echo "⚠️   Container '$CONTAINER' not found — bootstrapping…"
+    echo ""
+    bootstrap_container
+    STATUS=$(podman inspect --format '{{.State.Status}}' "$CONTAINER" 2>/dev/null || echo "missing")
 fi
 
 if [[ "$STATUS" != "running" ]]; then
@@ -85,6 +132,26 @@ case "$MODE" in
     if [[ -f "$PROJECT/src-tauri/target/release/bubblegum" ]]; then
         cp "$PROJECT/src-tauri/target/release/bubblegum" "$OUT_DIR/"
         echo "✅  Binary → dist/bubblegum"
+    fi
+
+    echo ""
+    echo "Artifacts in: $OUT_DIR"
+    ls -lh "$OUT_DIR" 2>/dev/null || true
+    ;;
+
+  --appimage)
+    echo "📦  Building Bubblegum AppImage…"
+    "${EXEC_PREFIX[@]}" "$SHELL_INIT && cargo tauri build --bundles appimage 2>&1"
+
+    OUT_DIR="$(dirname "$0")/dist"
+    mkdir -p "$OUT_DIR"
+
+    APPIMAGE=$(find "$PROJECT/src-tauri/target/release/bundle/appimage" -name "*.AppImage" 2>/dev/null | head -1)
+    if [[ -n "$APPIMAGE" ]]; then
+        cp "$APPIMAGE" "$OUT_DIR/"
+        echo "✅  AppImage → dist/$(basename "$APPIMAGE")"
+    else
+        echo "⚠️  No AppImage found in target/release/bundle/appimage/"
     fi
 
     echo ""

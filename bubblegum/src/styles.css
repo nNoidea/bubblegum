@@ -45,6 +45,10 @@ body,
     color: var(--color-text);
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Cantarell, sans-serif;
     -webkit-font-smoothing: antialiased;
+    /* Force WebKit to request the named 'default' cursor so the compositor
+       resolves it through your cursor theme (e.g. Bibata) instead of falling
+       back to a raw X11/Wayland cursor that bypasses the theme entirely. */
+    cursor: default;
     /* Promote entire app to a GPU compositing layer */
     transform: translateZ(0);
     backface-visibility: hidden;
