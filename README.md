@@ -8,6 +8,34 @@ A unified package manager GUI for Linux. Bubblegum gives you a single dashboard 
 ![License](https://img.shields.io/badge/license-AGPL--3.0-red)
 ![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)
 
+## Installation
+
+### Download (AppImage)
+
+Grab the latest `.AppImage` from the [Releases](../../releases/latest) page and run it — no installation needed:
+
+```bash
+chmod +x bubblegum_*.AppImage
+./bubblegum_*.AppImage
+```
+
+> **Transparent builds** — every release is built automatically by [GitHub Actions](.github/workflows/release.yml) on a clean Ubuntu 24.04 runner. The build is never touched by me manually; you can inspect the exact workflow that produced the binary directly in this repo.
+
+### Build from Source
+
+If you prefer to compile it yourself:
+
+```bash
+git clone https://github.com/YOUR_USERNAME/bubblegum
+cd bubblegum
+./run.sh --appimage   # auto-bootstraps a distrobox container, then builds
+# → dist/bubblegum_*.AppImage
+```
+
+`run.sh` sets up an isolated Ubuntu 24.04 distrobox container automatically on first run — your host system stays untouched.
+
+---
+
 ## Features
 
 - **Unified view** — See every installed package in one place, grouped by source
@@ -34,51 +62,16 @@ A unified package manager GUI for Linux. Bubblegum gives you a single dashboard 
 | Cargo   |    ✅    |    —    |     —     | Read-only listing                    |
 | npm     |    ✅    |    —    |     —     | Read-only listing                    |
 
-## Getting Started
-
-### Prerequisites
-
-- Linux (x86_64)
-- [Podman](https://podman.io/) and [Distrobox](https://distrobox.it/) (for the dev environment)
-- Or: Rust 1.70+, Node.js 20+, and the [Tauri v2 system dependencies](https://v2.tauri.app/start/prerequisites/#linux)
-
-### Quick Start (Distrobox)
-
-The recommended development workflow uses a distrobox container so your host stays clean.
-
-```bash
-# 1. Create the container (Ubuntu 24.04, named "bubblegum")
-distrobox create --name bubblegum --image ubuntu:24.04 --home ./box
-
-# 2. Enter the container and run the setup script
-distrobox enter bubblegum
-./box/setup-dev-env.sh
-
-# 3. Build it
-./run.sh --build
-```
-
-### Manual Setup (no container)
-
-If you already have the Tauri v2 prerequisites installed:
-
-```bash
-cd bubblegum
-npm install
-npm run tauri build -- --no-bundle
-# or cargo tauri dev
-# Binary: src-tauri/target/release/bubblegum
-```
-
 ## Development
 
-| Command             | Description                        |
-| ------------------- | ---------------------------------- |
-| `./run.sh --dev`    | Hot-reload dev mode via distrobox  |
-| `./run.sh --build`  | Release build via distrobox        |
-| `cargo tauri dev`   | Dev mode (inside container/manual) |
-| `cargo tauri build` | Release build (inside container)   |
-| `npm run dev`       | Frontend-only dev server           |
+| Command               | Description                        |
+| --------------------- | ---------------------------------- |
+| `./run.sh --dev`      | Hot-reload dev mode via distrobox  |
+| `./run.sh --build`    | Release binary via distrobox       |
+| `./run.sh --appimage` | AppImage bundle via distrobox      |
+| `cargo tauri dev`     | Dev mode (inside container/manual) |
+| `cargo tauri build`   | Release build (inside container)   |
+| `npm run dev`         | Frontend-only dev server           |
 
 ## Contributing
 
