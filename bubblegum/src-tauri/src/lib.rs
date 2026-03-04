@@ -595,7 +595,7 @@ fn get_update_command(manager_id: String) -> String {
             }
         }
         "snap"    => "pkexec snap refresh".into(),
-        "nix"     => "nix-env -u '*'".into(),
+        "nix"     => "nix profile upgrade '.*'".into(),
         _         => format!("# Unknown manager: {}", manager_id),
     }
 }
@@ -620,6 +620,7 @@ fn stream_process(
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
+        .env_remove("LD_LIBRARY_PATH")
         .spawn()
     {
         Ok(c) => c,
@@ -702,7 +703,7 @@ async fn execute_update(
                 }
             }
             "snap"    => vec!["pkexec", "snap", "refresh"],
-            "nix"     => vec!["nix-env", "-u", "*"],
+            "nix"     => vec!["nix", "profile", "upgrade", ".*"],
             "local"   => {
                 let _ = app.emit("terminal::line", TerminalLine {
                     request_id: request_id.clone(),

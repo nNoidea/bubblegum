@@ -435,7 +435,7 @@ export function Overview() {
                         className="text-2xl font-black select-none leading-tight tracking-tight"
                         style={{ color: "var(--color-text)" }}
                     >
-                        🛇 Bubblegum
+                        Bubblegum
                     </span>
 
                     <div

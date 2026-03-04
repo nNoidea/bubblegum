@@ -137,6 +137,7 @@ pub fn run_host_cmd(prog: &str, args: &[&str]) -> String {
         match std::process::Command::new("distrobox-host-exec")
             .args(&full_args)
             .stdin(std::process::Stdio::null())
+            .env_remove("LD_LIBRARY_PATH")
             .output()
         {
             Ok(output) => {
@@ -165,6 +166,7 @@ pub fn host_cmd_exists(name: &str) -> bool {
         std::process::Command::new("distrobox-host-exec")
             .args(["which", name])
             .stdin(std::process::Stdio::null())
+            .env_remove("LD_LIBRARY_PATH")
             .output()
             .map(|o| o.status.success())
             .unwrap_or(false)

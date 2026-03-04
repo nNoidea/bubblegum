@@ -148,8 +148,8 @@ case "$MODE" in
 
     APPIMAGE=$(find "$PROJECT/src-tauri/target/release/bundle/appimage" -name "*.AppImage" 2>/dev/null | head -1)
     if [[ -n "$APPIMAGE" ]]; then
-        cp "$APPIMAGE" "$OUT_DIR/"
-        echo "✅  AppImage → dist/$(basename "$APPIMAGE")"
+        cp "$APPIMAGE" "$OUT_DIR/bubblegum.AppImage"
+        echo "✅  AppImage → dist/bubblegum.AppImage"
     else
         echo "⚠️  No AppImage found in target/release/bundle/appimage/"
     fi

@@ -1,91 +1,49 @@
 use super::{run_cmd, Package};
 
-/// List installed nix packages (user profile)
+/// List installed nix packages (user profile).
+///
+/// Modern Nix (2.x+) uses flake-based profiles that are INCOMPATIBLE with
+/// `nix-env`. Calling `nix-env -q` on such a profile prints an error to
+/// stderr and may **hang** while evaluating nixpkgs, which would block the
+/// entire packages stream (the `packages::done` event never fires).
+///
+/// We therefore use ONLY `nix profile list`, which works for both legacy
+/// nix-env profiles and modern flake profiles.
 pub fn get_packages(_user_mode: bool) -> Vec<Package> {
-    // nix-env -q lists user-installed packages
-    // Format: attribute_name-version
-    let out = run_cmd("nix-env", &["-q", "--no-name"]);
+    // `nix profile list` works on all profile types (legacy + flake).
+    let profile_out = run_cmd("nix", &["profile", "list"]);
 
-    // Try nix profile list for Nix 2.x flakes-based installs
-    let profile_out = run_cmd(
-        "nix",
-        &["profile", "list"],
-    );
-
-    let mut packages: Vec<Package> = Vec::new();
-
-    if !profile_out.trim().is_empty() && !profile_out.contains("error") {
-        packages.extend(parse_nix_profile_list(&profile_out));
+    if profile_out.trim().is_empty() || profile_out.contains("error") {
+        return vec![];
     }
 
-    if !out.trim().is_empty() && !out.contains("error") {
-        packages.extend(parse_nix_env_q(&out));
-    }
-
-    // Deduplicate by id
-    packages.dedup_by(|a, b| a.id == b.id);
-    packages
+    parse_nix_profile_list(&profile_out)
 }
 
-fn parse_nix_env_q(output: &str) -> Vec<Package> {
-    output
-        .lines()
-        .filter(|l| !l.trim().is_empty())
-        .map(|line| {
-            let name = line.trim().to_string();
-            // Extract version: last hyphen-delimited segment that starts with digit
-            let (pkg_name, version) = split_nix_name_version(&name);
-
-            Package {
-                id: format!("nix:{}", pkg_name),
-                name: pkg_name.clone(),
-                version,
-                description: None,
-                manager: "nix".into(),
-                source: Some("nixpkgs".into()),
-                is_user_installed: true,
-                icon_name: Some(pkg_name),
-                category: None,
-                size_bytes: None,
-            }
-        })
-        .collect()
-}
 
 fn parse_nix_profile_list(output: &str) -> Vec<Package> {
-    // Nix 2.x: each entry has multiple lines, starts with "Index:"
     let mut packages = Vec::new();
     let mut current_name: Option<String> = None;
     let mut current_version: Option<String> = None;
+    let mut current_store: Option<String> = None;
 
-    for line in output.lines() {
-        let line = line.trim();
-        if line.starts_with("Name:") {
-            current_name = Some(line.trim_start_matches("Name:").trim().to_string());
-        } else if line.starts_with("Version:") {
-            current_version = Some(line.trim_start_matches("Version:").trim().to_string());
-        } else if line.is_empty() {
-            if let Some(name) = current_name.take() {
-                let version = current_version.take().unwrap_or_else(|| "unknown".into());
-                packages.push(Package {
-                    id: format!("nix:{}", name),
-                    name: name.clone(),
-                    version,
-                    description: None,
-                    manager: "nix".into(),
-                    source: Some("nixpkgs".into()),
-                    is_user_installed: true,
-                    icon_name: Some(name),
-                    category: None,
-                    size_bytes: None,
-                });
-            }
-        }
-    }
-
-    // Flush the last entry if the output doesn't end with a blank line
-    if let Some(name) = current_name.take() {
-        let version = current_version.take().unwrap_or_else(|| "unknown".into());
+    let flush = |name: String, version: Option<String>, store: Option<String>, packages: &mut Vec<Package>| {
+        // If no explicit Version: field, extract from store path:
+        // /nix/store/<hash>-<name>-<version>  →  last component after name
+        let version = version.unwrap_or_else(|| {
+            store
+                .as_deref()
+                .and_then(|s| s.split_whitespace().next()) // first store path only
+                .and_then(|p| p.rsplit('/').next())        // basename: hash-name-ver
+                .and_then(|base| {
+                    // skip the hash prefix (everything before the first '-' in a
+                    // 32-char nix hash suffix, which always contains digits+letters)
+                    let after_hash = base.splitn(2, '-').nth(1)?; // "name-ver" or "name"
+                    let (_, ver) = split_nix_name_version(after_hash);
+                    if ver == "unknown" { None } else { Some(ver) }
+                })
+                .unwrap_or_else(|| "unknown".into())
+        });
         packages.push(Package {
             id: format!("nix:{}", name),
             name: name.clone(),
@@ -98,6 +56,26 @@ fn parse_nix_profile_list(output: &str) -> Vec<Package> {
             category: None,
             size_bytes: None,
         });
+    };
+
+    for line in output.lines() {
+        let line = line.trim();
+        if line.starts_with("Name:") {
+            // Flush previous entry first
+            if let Some(name) = current_name.take() {
+                flush(name, current_version.take(), current_store.take(), &mut packages);
+            }
+            current_name = Some(line.trim_start_matches("Name:").trim().to_string());
+        } else if line.starts_with("Version:") {
+            current_version = Some(line.trim_start_matches("Version:").trim().to_string());
+        } else if line.starts_with("Store paths:") {
+            current_store = Some(line.trim_start_matches("Store paths:").trim().to_string());
+        }
+    }
+
+    // Flush the last entry
+    if let Some(name) = current_name.take() {
+        flush(name, current_version.take(), current_store.take(), &mut packages);
     }
 
     packages
@@ -113,39 +91,18 @@ fn split_nix_name_version(full: &str) -> (String, String) {
     }
 }
 
-/// Get pending nix updates
+/// Get pending nix updates.
+///
+/// `nix-env -u --dry-run` is incompatible with modern flake-based profiles
+/// (same as `-q` — it errors and may hang, blocking `updates::done`).
+/// `nix profile upgrade` has no `--dry-run` / `--check` flag.
+///
+/// We return empty here to avoid hanging. The user can still trigger
+/// `nix profile upgrade '.*'` from the terminal panel via the update button.
 pub fn get_updates() -> Vec<super::Update> {
-    // nix-env -u --dry-run shows what would be updated
-    let out = run_cmd("nix-env", &["-u", "--dry-run"]);
-    out.lines()
-        .filter(|l| l.contains("->") || l.starts_with("upgrading"))
-        .filter_map(parse_update_line)
-        .collect()
+    vec![]
 }
 
-fn parse_update_line(line: &str) -> Option<super::Update> {
-    // "upgrading 'hello-2.10' to 'hello-2.12'"
-    let stripped = line.trim_start_matches("upgrading").trim().to_string();
-    let parts: Vec<&str> = stripped.split('\'').collect();
-    // parts: ["", "hello-2.10", " to ", "hello-2.12", ""]
-    if parts.len() < 4 {
-        return None;
-    }
-    let old_full = parts[1];
-    let new_full = parts.get(3).unwrap_or(&"");
-
-    let (name, current_version) = split_nix_name_version(old_full);
-    let (_n, new_version) = split_nix_name_version(new_full);
-
-    Some(super::Update {
-        package_id: format!("nix:{}", name),
-        name,
-        current_version,
-        new_version,
-        manager: "nix".into(),
-        source: Some("nixpkgs".into()),
-    })
-}
 
 #[cfg(test)]
 mod tests {
@@ -167,7 +124,33 @@ Store paths:        /nix/store/xyz-firefox-131.0
         let pkgs = parse_nix_profile_list(output);
         assert_eq!(pkgs.len(), 2);
         assert_eq!(pkgs[0].name, "bluetuith");
+        assert_eq!(pkgs[0].version, "0.2.3"); // extracted from store path
         assert_eq!(pkgs[1].name, "firefox");
+        assert_eq!(pkgs[1].version, "131.0");  // extracted from store path
+    }
+
+    #[test]
+    fn parse_profile_list_real_world_flake() {
+        // Real output from `nix profile list` with flake-based installs (no Version: line)
+        let output = "\
+Name:               bluetuith
+Flake attribute:    legacyPackages.x86_64-linux.bluetuith
+Original flake URL: flake:nixpkgs
+Locked flake URL:   github:NixOS/nixpkgs/ac055f38c798b0d87695240c7b761b82fc7e5bc2?narHash=sha256-xxx
+Store paths:        /nix/store/lkg44kimfd48pq34yvsp4084r0qc38d1-bluetuith-0.2.6
+
+Name:               wtype
+Flake attribute:    legacyPackages.x86_64-linux.wtype
+Original flake URL: flake:nixpkgs
+Locked flake URL:   github:NixOS/nixpkgs/d1c15b7d5806069da59e819999d70e1cec0760bf?narHash=sha256-yyy
+Store paths:        /nix/store/q7jyal866z2bkmcdlyv14za2y6h0mb1j-wtype-0.4
+";
+        let pkgs = parse_nix_profile_list(output);
+        assert_eq!(pkgs.len(), 2);
+        assert_eq!(pkgs[0].name, "bluetuith");
+        assert_eq!(pkgs[0].version, "0.2.6");
+        assert_eq!(pkgs[1].name, "wtype");
+        assert_eq!(pkgs[1].version, "0.4");
     }
 
     #[test]
@@ -211,30 +194,6 @@ Store paths:        /nix/store/xyz-cowsay-3.7.0
         assert!(pkgs.is_empty());
     }
 
-    // ── nix-env -q ───────────────────────────────────────────────────────────
-
-    #[test]
-    fn parse_nix_env_q_basic() {
-        let output = "firefox-120.0.1\nhello-2.12\n";
-        let pkgs = parse_nix_env_q(output);
-        assert_eq!(pkgs.len(), 2);
-        assert_eq!(pkgs[0].name, "firefox");
-        assert_eq!(pkgs[0].version, "120.0.1");
-        assert_eq!(pkgs[1].name, "hello");
-        assert_eq!(pkgs[1].version, "2.12");
-    }
-
-    #[test]
-    fn parse_nix_env_q_no_version() {
-        let output = "some-tool\n";
-        let pkgs = parse_nix_env_q(output);
-        assert_eq!(pkgs.len(), 1);
-        // "some-tool" → name="some", version="tool" (splits on last hyphen where
-        // the segment starts with a digit... but "tool" doesn't start with digit)
-        // So it should be name="some-tool", version="unknown"
-        assert_eq!(pkgs[0].name, "some-tool");
-        assert_eq!(pkgs[0].version, "unknown");
-    }
 
     // ── split_nix_name_version ───────────────────────────────────────────────
 
@@ -259,20 +218,4 @@ Store paths:        /nix/store/xyz-cowsay-3.7.0
         assert_eq!(ver, "unknown");
     }
 
-    // ── update parsing ───────────────────────────────────────────────────────
-
-    #[test]
-    fn parse_update_basic() {
-        let u = parse_update_line("upgrading 'hello-2.10' to 'hello-2.12'");
-        assert!(u.is_some());
-        let u = u.unwrap();
-        assert_eq!(u.name, "hello");
-        assert_eq!(u.current_version, "2.10");
-        assert_eq!(u.new_version, "2.12");
-    }
-
-    #[test]
-    fn parse_update_malformed() {
-        assert!(parse_update_line("some random text").is_none());
-    }
 }
