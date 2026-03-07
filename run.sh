@@ -73,9 +73,8 @@ case "$MODE" in
       # Tauri uses appimagetool which might need this inside Distrobox
       export APPIMAGE_EXTRACT_AND_RUN=1
       cargo tauri build --bundles appimage
-      src=\$(find src-tauri/target/release/bundle/appimage -name '*.AppImage' 2>/dev/null | head -1)
-      if [[ -n \"\$src\" ]]; then
-          cp \"\$src\" '$OUT_DIR'/bubblegum.AppImage
+      if ls src-tauri/target/release/bundle/appimage/*.AppImage >/dev/null 2>&1; then
+          cp src-tauri/target/release/bundle/appimage/*.AppImage '$OUT_DIR'/bubblegum.AppImage
           echo '✅  AppImage → dist/bubblegum.AppImage'
       else
           echo '⚠️   No AppImage found'
