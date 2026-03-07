@@ -15,43 +15,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install system dependencies
+      - name: Install Distrobox
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y \
-            build-essential pkg-config curl file \
-            libssl-dev libgtk-3-dev libwebkit2gtk-4.1-dev \
-            libayatana-appindicator3-dev librsvg2-dev \
-            libjavascriptcoregtk-4.1-dev libsoup-3.0-dev \
-            libglib2.0-dev libdbus-1-dev patchelf xdg-utils
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache Rust build artifacts
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: bubblegum/src-tauri
-
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-          cache: npm
-          cache-dependency-path: bubblegum/package-lock.json
-
-      - name: Install npm dependencies
-        working-directory: bubblegum
-        run: npm ci
-
-      - name: Install Tauri CLI
-        run: cargo install tauri-cli --version "^2" --locked
+          sudo apt-get install -y distrobox podman
 
       - name: Build AppImage
-        working-directory: bubblegum
-        run: cargo tauri build --bundles appimage
+        run: make appimage
 
       - name: Upload AppImage to release
         uses: softprops/action-gh-release@v2
         with:
-          files: bubblegum/src-tauri/target/release/bundle/appimage/*.AppImage
+          files: dist/*.AppImage
