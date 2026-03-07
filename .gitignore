@@ -38,3 +38,4 @@ Thumbs.db
 
 # ── Dev scratch / prototypes ──────────────────────────────────────────────────
 scratch/
+.podman-cache/
