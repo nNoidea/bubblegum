@@ -1,0 +1,34 @@
+app-id: com.nnoidea.bubblegum
+runtime: org.gnome.Platform
+runtime-version: "46"
+sdk: org.gnome.Sdk
+
+command: bubblegum
+
+finish-args:
+  # UI constraints
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  # Networking for updates checking
+  - --share=network
+  # Critical: Allow Bubblegum to escape sandbox to execute host package managers using flatpak-spawn
+  - --talk-name=org.freedesktop.Flatpak
+  # Allow Bubblegum to read user configurations out of /home if required
+  - --filesystem=host:ro
+
+# Since this is a Tauri/Node/Rust app, compiling it inside a pure Flatpak build environment
+# requires using generators (like flatpak-node-generator and flatpak-cargo-generator) 
+# to download all dependencies offline. This manifest serves as the foundational 
+# configuration layer for Flathub submission.
+modules:
+  - name: bubblegum
+    buildsystem: simple
+    build-commands:
+      # These build commands would be replaced by the generated Rust/Node steps
+      - echo "Placeholder for offline Node/Rust build process"
+      - install -Dm755 ../src-tauri/target/release/bubblegum /app/bin/bubblegum
+    sources:
+      - type: dir
+        path: ..

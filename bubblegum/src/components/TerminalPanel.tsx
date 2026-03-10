@@ -11,21 +11,21 @@ function TerminalLine({ entry }: { entry: TerminalEntry }) {
 
     switch (entry.kind) {
         case "cmd":
-            style.color = "#7dd3fc"; // sky-300
+            style.color = "var(--color-blue)";
             style.fontWeight = 600;
             break;
         case "out":
             style.color = "#d4d4d4";
             break;
         case "err":
-            style.color = "#f87171"; // red-400
+            style.color = "var(--color-red)";
             break;
         case "exit":
-            style.color = entry.text.startsWith("✓") ? "#4ade80" : "#f87171";
+            style.color = entry.text.startsWith("✓") ? "var(--color-green)" : "var(--color-red)";
             style.fontStyle = "italic";
             break;
         case "info":
-            style.color = "#a78bfa"; // purple-400
+            style.color = "var(--color-purple)";
             prefix = "# ";
             break;
     }
@@ -63,32 +63,32 @@ export function TerminalPanel() {
             className="shrink-0 flex flex-col"
             style={{
                 height: 280,
-                background: "#0d0d14",
-                borderTop: "1px solid #1e1e2e",
+                background: "#1e1e1e",
+                borderTop: "1px solid var(--color-border)",
             }}
         >
             {/* ── Header bar ── */}
             <div
-                className="flex items-center gap-2 px-4 py-2 shrink-0"
+                className="flex items-center gap-2 px-4 py-2 shrink-0 element-border"
                 style={{
-                    background: "#12121f",
-                    borderBottom: "1px solid #1e1e2e",
+                    background: "var(--color-surface)",
+                    borderBottom: "1px solid var(--color-border)",
                 }}
             >
                 <Terminal
-                    size={13}
-                    style={{ color: "#7dd3fc" }}
+                    size={14}
+                    style={{ color: "var(--color-muted)" }}
                 />
                 <span
-                    className="text-xs font-semibold tracking-widest uppercase"
-                    style={{ color: "#7dd3fc" }}
+                    className="text-sm font-semibold"
+                    style={{ color: "var(--color-text)" }}
                 >
-                    Terminal
+                    Terminal Console
                 </span>
                 {terminalRunning && (
                     <span
-                        className="text-xs px-2 py-0.5 rounded animate-pulse"
-                        style={{ background: "#4ade8020", color: "#4ade80", border: "1px solid #4ade8040" }}
+                        className="text-xs px-2 py-0.5 rounded-md animate-pulse font-medium"
+                        style={{ background: "rgba(38,162,105,0.2)", color: "var(--color-green)" }}
                     >
                         running…
                     </span>
@@ -113,8 +113,8 @@ export function TerminalPanel() {
                             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
                             style={
                                 terminalRunning
-                                    ? { background: "#1a2e1a", color: "#6e6e8e", opacity: 0.5 }
-                                    : { background: "#166534", color: "#4ade80", border: "1px solid #4ade8040", cursor: "pointer" }
+                                    ? { background: "var(--color-border)", color: "var(--color-muted)", opacity: 0.5 }
+                                    : { background: "var(--color-blue)", color: "white", border: "1px solid rgba(0,0,0,0.2)", cursor: "pointer" }
                             }
                         >
                             <Play size={14} />
@@ -128,7 +128,7 @@ export function TerminalPanel() {
             {terminalStagedCommands.length > 0 && (
                 <div
                     className="shrink-0 flex flex-col gap-1 px-4 py-2"
-                    style={{ background: "#0f0f1a", borderBottom: "1px solid #1e1e2e" }}
+                    style={{ background: "var(--color-bg)", borderBottom: "1px solid var(--color-border)" }}
                 >
                     {terminalStagedCommands.map((item, i) => (
                         <div
@@ -137,15 +137,15 @@ export function TerminalPanel() {
                         >
                             <span
                                 className="text-xs font-mono flex-1"
-                                style={{ color: "#a78bfa" }}
+                                style={{ color: "var(--color-subtext)" }}
                             >
                                 {MANAGER_EMOJIS[item.manager] ?? "📦"} remove <strong>{item.displayName}</strong>
                                 <span style={{ color: "#6e6e8e" }}> ({item.manager})</span>
                             </span>
                             <button
                                 onClick={() => unstageCommand(i)}
-                                className="p-2 rounded-lg transition-colors hover:bg-red-500/20"
-                                style={{ color: "#6e6e8e" }}
+                                className="p-2 rounded-lg transition-colors hover:bg-[var(--color-red)]/20"
+                                style={{ color: "var(--color-muted)" }}
                                 title="Remove command"
                             >
                                 <X size={14} />
@@ -159,7 +159,7 @@ export function TerminalPanel() {
             <div
                 ref={outputRef}
                 className="flex-1 overflow-y-auto px-4 py-2 font-mono text-xs"
-                style={{ scrollbarWidth: "thin", scrollbarColor: "#2a2a3f #0d0d14" }}
+                style={{ scrollbarWidth: "thin", scrollbarColor: "var(--color-border) #1e1e1e" }}
             >
                 {terminalOutput.map((entry, i) => (
                     <TerminalLine
@@ -170,7 +170,7 @@ export function TerminalPanel() {
                 {terminalRunning && (
                     <div
                         className="animate-pulse mt-1"
-                        style={{ color: "#7dd3fc" }}
+                        style={{ color: "var(--color-blue)" }}
                     >
                         ▌
                     </div>

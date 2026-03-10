@@ -1,6 +1,5 @@
 import { useEffect } from "react";
-import { RefreshCw, ArrowRight, CheckCircle2, ArrowLeft, Cpu } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { RefreshCw, ArrowRight, CheckCircle2, Cpu } from "lucide-react";
 import { useAppStore, ALL_MANAGER_IDS } from "../store";
 import { ManagerBadge } from "../components/ManagerBadge";
 import { ProgressBar, ManagerPill } from "../components/StatusWidgets";
@@ -32,7 +31,6 @@ function SkeletonRow() {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export function Updates() {
-    const navigate = useNavigate();
     const { updates, updateLoading, updatingManager, loadingUpdateManagers, finishedUpdateManagers, managers, streamUpdates, updateManager, firmwareUpdating, updateFirmware } = useAppStore();
 
     useEffect(() => {
@@ -69,92 +67,54 @@ export function Updates() {
             className="flex flex-col h-screen overflow-hidden"
             style={{ position: "relative" }}
         >
-            {/* ── Top bar ─────────────────────────────────────────────────────── */}
-            <header
-                className="flex items-center gap-4 px-6 py-4 shrink-0"
-                style={{ background: "var(--color-bg)", borderBottom: "1px solid var(--color-border)" }}
-            >
-                <button
-                    onClick={() => navigate("/")}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-white/5"
-                    style={{ border: "1px solid var(--color-border)", color: "var(--color-subtext)" }}
-                >
-                    <ArrowLeft size={16} />
-                    Back
-                </button>
-                <div
-                    className="text-lg font-bold"
-                    style={{ color: "var(--color-text)" }}
-                >
-                    🔄 Updates
-                </div>
-                {updates.length > 0 && (
-                    <span
-                        className="px-2 py-0.5 rounded-full text-xs font-bold"
-                        style={{ background: "#EF444422", color: "#EF4444" }}
-                    >
-                        {updates.length}
-                    </span>
-                )}
-                <div className="flex-1" />
-                {managerIds.length > 0 && !isStreaming && !updatingManager && (
-                    <button
-                        onClick={handleUpdateAll}
-                        disabled={!!updatingManager || isStreaming}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed mr-2"
-                        style={{ background: "var(--color-card)", border: "1px solid var(--color-border)", color: "var(--color-text)" }}
-                        title="Update all managers with pending updates"
-                    >
-                        <RefreshCw size={16} />
-                        Update All ({updates.length})
-                    </button>
-                )}
-                <button
-                    onClick={updateFirmware}
-                    disabled={firmwareUpdating || !!updatingManager}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed mr-2"
-                    style={{ background: "var(--color-card)", border: "1px solid var(--color-border)", color: "var(--color-text)" }}
-                    title="Check and install firmware updates via fwupd"
-                >
-                    <Cpu size={16} className={firmwareUpdating ? "animate-spin" : ""} />
-                    {firmwareUpdating ? "Updating Firmware…" : "Firmware Update"}
-                </button>
-                <button
-                    onClick={() => streamUpdates()}
-                    disabled={updateLoading}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{ background: "var(--color-purple)", color: "white" }}
-                >
-                    <RefreshCw
-                        size={16}
-                        className={updateLoading ? "animate-spin" : ""}
-                    />
-                    Refresh
-                </button>
-            </header>
+
 
             {/* ── Scrollable content ─────────────────────────────────────────── */}
             <div className="flex-1 overflow-y-scroll p-6">
                 {/* ── Page header ────────────────────────────────────────────────── */}
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-3 mb-6">
                     <h1
-                        className="text-2xl font-bold"
+                        className="text-2xl font-bold tracking-tight"
                         style={{ color: "var(--color-text)" }}
                     >
-                        Updates
+                        System Updates
                     </h1>
+                    <div className="flex-1" />
+
+                    {managerIds.length > 0 && !isStreaming && !updatingManager && (
+                        <button
+                            onClick={handleUpdateAll}
+                            disabled={!!updatingManager || isStreaming}
+                            className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            style={{ background: "var(--color-blue)", color: "white" }}
+                            title="Update all managers with pending updates"
+                        >
+                            <RefreshCw size={14} />
+                            Update All ({updates.length})
+                        </button>
+                    )}
                     <button
-                        className="ml-auto flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                        onClick={updateFirmware}
+                        disabled={firmwareUpdating || !!updatingManager}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{ background: "var(--color-card)", border: "1px solid var(--color-border)", color: "var(--color-text)" }}
+                        title="Check and install firmware updates via fwupd"
+                    >
+                        <Cpu size={14} className={firmwareUpdating ? "animate-spin" : ""} />
+                        {firmwareUpdating ? "Updating Firmware…" : "Firmware Update"}
+                    </button>
+                    <button
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{
                             background: "var(--color-card)",
                             border: "1px solid var(--color-border)",
-                            color: "var(--color-subtext)",
+                            color: "var(--color-text)",
                         }}
                         onClick={streamUpdates}
                         disabled={isStreaming}
                     >
                         <RefreshCw
-                            size={16}
+                            size={14}
                             className={isStreaming ? "animate-spin" : ""}
                         />
                         Refresh

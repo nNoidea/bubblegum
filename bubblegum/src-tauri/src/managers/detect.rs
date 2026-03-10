@@ -125,7 +125,21 @@ fn get_version(cmd: &str, args: &[&str]) -> Option<String> {
 }
 
 fn get_host_version(cmd: &str, args: &[&str]) -> Option<String> {
-    if super::is_in_distrobox() {
+    if super::is_in_flatpak() {
+        let mut full_args = vec!["--host", cmd];
+        full_args.extend_from_slice(args);
+        std::process::Command::new("flatpak-spawn")
+            .args(&full_args)
+            .stdin(std::process::Stdio::null())
+            .env_remove("LD_LIBRARY_PATH")
+            .output()
+            .ok()
+            .filter(|o| o.status.success())
+            .and_then(|o| {
+                let s = String::from_utf8_lossy(&o.stdout).to_string();
+                s.lines().next().map(|l| l.trim().to_string())
+            })
+    } else if super::is_in_distrobox() {
         let mut full_args = vec![cmd];
         full_args.extend_from_slice(args);
         std::process::Command::new("distrobox-host-exec")

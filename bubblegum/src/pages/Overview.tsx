@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Search, RefreshCw, RotateCw, Zap, ArrowDownAZ, ArrowUpAZ, HardDrive } from "lucide-react";
+import { RotateCw, Zap, ArrowDownAZ, ArrowUpAZ, HardDrive } from "lucide-react";
 import { PackageCard } from "../components/PackageCard";
 import { TerminalPanel } from "../components/TerminalPanel";
 import { ProgressBar, ManagerPill } from "../components/StatusWidgets";
@@ -233,8 +232,6 @@ function SourceTab({ group, count, active, onClick }: { group: string; count: nu
 
 // ─── Main Overview page ───────────────────────────────────────────────────────
 export function Overview() {
-    const navigate = useNavigate();
-
     const {
         packages,
         loading,
@@ -244,10 +241,8 @@ export function Overview() {
         setSelectedManager,
         managers,
         userMode,
-        setUserMode,
         searchQuery,
         setSearchQuery,
-        updates,
         streamPackages,
         refreshSingleManager,
         packageCache,
@@ -298,7 +293,7 @@ export function Overview() {
         setPage(1);
         setSelectedSource("all");
         streamPackages();
-    }, [selectedManager, userMode]);
+    }, [selectedManager, useAppStore.getState().userMode]); // React to userMode changes from the store
 
     // ─── Infinite scroll ──────────────────────────────────────────────────────
     // The sentinel div only renders when hasMore && !loading, so if the observer
@@ -420,87 +415,8 @@ export function Overview() {
     const paged = useMemo(() => sortedPackages.slice(0, page * PAGE_SIZE), [sortedPackages, page]);
     const hasMore = paged.length < sortedPackages.length;
 
-    const updateCount = updates.length;
-
     return (
         <div className="flex flex-col h-screen overflow-hidden">
-            {/* ════ TOP TOOLBAR ════ */}
-            <header
-                className="shrink-0 flex items-center gap-4 px-6 py-3"
-                style={{ background: "var(--color-surface)", borderBottom: "1px solid var(--color-border)" }}
-            >
-                {/* Left: brand + User/System toggle stacked */}
-                <div className="flex flex-col gap-2 shrink-0">
-                    <span
-                        className="text-2xl font-black select-none leading-tight tracking-tight"
-                        style={{ color: "var(--color-text)" }}
-                    >
-                        Bubblegum
-                    </span>
-
-                    <div
-                        className="flex rounded-lg overflow-hidden self-start"
-                        style={{ background: "var(--color-card)", border: "1px solid var(--color-border)", padding: "2px" }}
-                    >
-                        {(["User", "System"] as const).map((mode) => {
-                            const isActive = (mode === "User") === userMode;
-                            return (
-                                <button
-                                    key={mode}
-                                    onClick={() => setUserMode(mode === "User")}
-                                    className="px-4 py-1.5 text-sm font-medium transition-all select-none rounded-lg"
-                                    style={isActive ? { background: "var(--color-purple)", color: "white" } : { color: "var(--color-muted)" }}
-                                >
-                                    {mode === "User" ? "👤 User" : "⚙️ System"}
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                {/* Center: big search bar */}
-                <div className="flex-1 relative">
-                    <Search
-                        size={15}
-                        className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-                        style={{ color: "var(--color-muted)" }}
-                    />
-                    <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder={packages.length > 0 ? `Search ${packages.length.toLocaleString()} packages… (/)` : "Search packages… (/)"}
-                        ref={searchInputRef}
-                        className="w-full rounded-2xl py-2.5 pl-10 pr-4 text-sm outline-none transition-all"
-                        style={{
-                            background: "var(--color-card)",
-                            border: "1.5px solid var(--color-border)",
-                            color: "var(--color-text)",
-                        }}
-                        onFocus={(e) => (e.currentTarget.style.borderColor = "var(--color-purple)")}
-                        onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-border)")}
-                    />
-                </div>
-
-                {/* Right: Updates button */}
-                <button
-                    onClick={() => navigate("/updates")}
-                    className="relative flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors shrink-0"
-                    style={{ background: "var(--color-purple)", color: "white" }}
-                >
-                    <RefreshCw size={14} />
-                    <span>Updates</span>
-                    {updateCount > 0 && (
-                        <span
-                            className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full text-xs font-bold flex items-center justify-center"
-                            style={{ background: "var(--color-red)", color: "white" }}
-                        >
-                            {updateCount > 99 ? "99+" : updateCount}
-                        </span>
-                    )}
-                </button>
-            </header>
-
             {/* ════ MANAGER TABS ════ */}
             <div
                 className="shrink-0 flex items-center gap-1.5 px-4 py-3 overflow-x-auto scrollbar-none"

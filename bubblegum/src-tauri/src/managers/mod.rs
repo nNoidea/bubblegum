@@ -127,11 +127,39 @@ pub fn is_in_distrobox() -> bool {
     std::path::Path::new("/run/host").exists()
 }
 
-/// Run a command on the host system via distrobox-host-exec when inside a distrobox,
+/// Returns true when running inside a flatpak sandbox
+pub fn is_in_flatpak() -> bool {
+    std::path::Path::new("/.flatpak-info").exists()
+}
+
+/// Run a command on the host system via flatpak-spawn/distrobox-host-exec when containerized,
 /// falling back to a direct call otherwise (e.g. native installs, CI).
 /// ANSI escape codes are automatically stripped from the output.
 pub fn run_host_cmd(prog: &str, args: &[&str]) -> String {
-    if is_in_distrobox() {
+    if is_in_flatpak() {
+        let mut full_args = vec!["--host", prog];
+        full_args.extend_from_slice(args);
+        match std::process::Command::new("flatpak-spawn")
+            .args(&full_args)
+            .stdin(std::process::Stdio::null())
+            .env_remove("LD_LIBRARY_PATH")
+            .output()
+        {
+            Ok(output) => {
+                if !output.status.success() {
+                    let stderr = String::from_utf8_lossy(&output.stderr);
+                    if !stderr.trim().is_empty() {
+                        eprintln!("[bubblegum] flatpak-spawn {} {:?} exited {}: {}", prog, args, output.status, stderr.trim());
+                    }
+                }
+                strip_ansi_codes(&String::from_utf8_lossy(&output.stdout).to_string())
+            }
+            Err(e) => {
+                eprintln!("[bubblegum] failed to run flatpak-spawn {} {:?}: {}", prog, args, e);
+                String::new()
+            }
+        }
+    } else if is_in_distrobox() {
         let mut full_args = vec![prog];
         full_args.extend_from_slice(args);
         match std::process::Command::new("distrobox-host-exec")
@@ -160,9 +188,17 @@ pub fn run_host_cmd(prog: &str, args: &[&str]) -> String {
 }
 
 /// Check whether a binary exists on the host system.
-/// Inside a distrobox this proxies through distrobox-host-exec; otherwise uses `which`.
+/// Proxies through flatpak-spawn/distrobox-host-exec if containerized; otherwise uses `which`.
 pub fn host_cmd_exists(name: &str) -> bool {
-    if is_in_distrobox() {
+    if is_in_flatpak() {
+        std::process::Command::new("flatpak-spawn")
+            .args(["--host", "which", name])
+            .stdin(std::process::Stdio::null())
+            .env_remove("LD_LIBRARY_PATH")
+            .output()
+            .map(|o| o.status.success())
+            .unwrap_or(false)
+    } else if is_in_distrobox() {
         std::process::Command::new("distrobox-host-exec")
             .args(["which", name])
             .stdin(std::process::Stdio::null())

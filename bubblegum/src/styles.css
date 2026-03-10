@@ -1,38 +1,38 @@
 @import "tailwindcss";
 
 @theme {
-    /* ── GNOME-inspired flat palette ────────────────────────────── */
-    --color-bg: #1c1c2e;
-    --color-surface: #232336;
-    --color-card: #2a2a3f;
-    --color-card-hover: #313153;
-    --color-border: #3d3d5a;
-    --color-muted: #6e6e8e;
-    --color-text: #e2e0ef;
-    --color-subtext: #a0a0be;
+    /* ── GNOME Adwaita Dark palette ────────────────────────────── */
+    --color-bg: #242424;
+    --color-surface: #303030;
+    --color-card: #383838;
+    --color-card-hover: #424242;
+    --color-border: #4a4a4a;
+    --color-muted: #77767b;
+    --color-text: #ffffff;
+    --color-subtext: #deddda;
 
-    /* ── Flat accents ──────────────────────────────────────────── */
-    --color-purple: #9141ac;
+    /* ── GNOME accents ──────────────────────────────────────────── */
     --color-blue: #3584e4;
+    --color-purple: #9141ac;
     --color-green: #26a269;
     --color-red: #e01b24;
-    --color-orange: #e66100;
-    --color-teal: #2190a4;
+    --color-orange: #ff7800;
+    --color-teal: #33d17a;
 
-    /* ── Manager brand colors (flat, not neon) ──────────────────── */
-    --color-flatpak: #2190a4;
-    --color-dnf: #3584e4;
+    /* ── Manager brand colors (Adwaita tuned) ──────────────────── */
+    --color-flatpak: #3584e4;
+    --color-dnf: #1c71d8;
     --color-apt: #c4402e;
     --color-pacman: #1c71d8;
-    --color-snap: #c7561e;
+    --color-snap: #e66100;
     --color-nix: #5e81ac;
-    --color-brew: #a86e00;
-    --color-cargo: #b5390e;
-    --color-pip: #3a75b5;
-    --color-npm: #a01010;
+    --color-brew: #cd9309;
+    --color-cargo: #e01b24;
+    --color-pip: #3584e4;
+    --color-npm: #c4402e;
 
-    --radius-card: 12px;
-    --radius-badge: 6px;
+    --radius-card: 16px;
+    --radius-badge: 8px;
 }
 
 html,

@@ -82,13 +82,10 @@ export function PackageCard({ pkg }: PackageCardProps) {
                     color={color}
                     size={64}
                 />
-                <div
-                    className="flex flex-col shrink-0 rounded-lg overflow-hidden"
-                    style={{ border: "1px solid var(--color-border)" }}
-                >
+                <div className="flex flex-col gap-2 shrink-0">
                     <button
-                        className={clsx("p-2 transition-colors", "hover:bg-blue-500/20 hover:text-blue-400")}
-                        style={{ color: "var(--color-muted)", borderBottom: "1px solid var(--color-border)" }}
+                        className={clsx("p-2 rounded-full transition-all", "hover:bg-[var(--color-blue)]/20 hover:text-[var(--color-blue)]")}
+                        style={{ color: "var(--color-muted)", background: "var(--color-surface)" }}
                         onClick={handleCopyName}
                         title="Copy package name"
                     >
@@ -102,8 +99,8 @@ export function PackageCard({ pkg }: PackageCardProps) {
                         )}
                     </button>
                     <button
-                        className={clsx("p-2 transition-colors", staged ? "bg-red-500/20" : "hover:bg-red-500/20 hover:text-red-400")}
-                        style={{ color: staged ? "#f87171" : "var(--color-muted)" }}
+                        className={clsx("p-2 rounded-full transition-all", staged ? "bg-[var(--color-red)]/20 text-[var(--color-red)]" : "hover:bg-[var(--color-red)]/20 hover:text-[var(--color-red)]")}
+                        style={{ color: staged ? "var(--color-red)" : "var(--color-muted)", background: "var(--color-surface)" }}
                         onClick={handleStageUninstall}
                         title="Stage for removal in terminal"
                     >

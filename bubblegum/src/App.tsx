@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { HashRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { Overview } from "./pages/Overview";
-import { Search } from "./pages/Search";
 import { Updates } from "./pages/Updates";
 import { useAppStore } from "./store";
 import "./styles.css";
@@ -28,10 +27,6 @@ function App() {
                     <Route
                         index
                         element={<Overview />}
-                    />
-                    <Route
-                        path="search"
-                        element={<Search />}
                     />
                     <Route
                         path="updates"

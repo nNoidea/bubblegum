@@ -685,6 +685,7 @@ async fn execute_update(
 
     thread::spawn(move || {
         let is_distrobox = managers::is_in_distrobox();
+        let is_flatpak = managers::is_in_flatpak();
         // dnf targets the host system (detected via host_cmd_exists in detect.rs)
         let host_mgr = manager_id == "dnf";
 
@@ -716,13 +717,20 @@ async fn execute_update(
             _         => unreachable!(),
         };
 
-        let (prog, args): (&str, Vec<&str>) = if is_distrobox && host_mgr {
-            ("distrobox-host-exec", base)
+        let mut final_args = Vec::new();
+        let prog = if is_flatpak && host_mgr {
+            final_args.push("--host");
+            final_args.extend_from_slice(&base);
+            "flatpak-spawn"
+        } else if is_distrobox && host_mgr {
+            final_args.extend_from_slice(&base);
+            "distrobox-host-exec"
         } else {
-            (base[0], base[1..].to_vec())
+            final_args.extend_from_slice(&base[1..]);
+            base[0]
         };
 
-        let exit_code = stream_process(prog, &args, &request_id, &app);
+        let exit_code = stream_process(prog, &final_args, &request_id, &app);
         let _ = app.emit("terminal::done", TerminalDone { request_id, exit_code });
     });
 
@@ -751,6 +759,7 @@ async fn execute_batch_uninstall(
 
     thread::spawn(move || {
         let is_distrobox = managers::is_in_distrobox();
+        let is_flatpak = managers::is_in_flatpak();
         let host_mgr = manager_id == "dnf";
 
         // Extract clean package names (strip "manager:" prefix)
@@ -813,13 +822,20 @@ async fn execute_batch_uninstall(
         let name_refs: Vec<&str> = names.iter().map(|s| s.as_str()).collect();
         base.extend_from_slice(&name_refs);
 
-        let (prog, args): (&str, Vec<&str>) = if is_distrobox && host_mgr {
-            ("distrobox-host-exec", base)
+        let mut final_args = Vec::new();
+        let prog = if is_flatpak && host_mgr {
+            final_args.push("--host");
+            final_args.extend_from_slice(&base);
+            "flatpak-spawn"
+        } else if is_distrobox && host_mgr {
+            final_args.extend_from_slice(&base);
+            "distrobox-host-exec"
         } else {
-            (base[0], base[1..].to_vec())
+            final_args.extend_from_slice(&base[1..]);
+            base[0]
         };
 
-        let exit_code = stream_process(prog, &args, &request_id, &app);
+        let exit_code = stream_process(prog, &final_args, &request_id, &app);
         let _ = app.emit("terminal::done", TerminalDone { request_id, exit_code });
     });
 
@@ -837,15 +853,20 @@ async fn update_firmware(
 
     thread::spawn(move || {
         let is_distrobox = managers::is_in_distrobox();
+        let is_flatpak = managers::is_in_flatpak();
 
         // fwupdmgr is a host-level tool — route through distrobox-host-exec if needed
-        let (refresh_prog, refresh_args): (&str, Vec<&str>) = if is_distrobox {
+        let (refresh_prog, refresh_args): (&str, Vec<&str>) = if is_flatpak {
+            ("flatpak-spawn", vec!["--host", "pkexec", "fwupdmgr", "refresh"])
+        } else if is_distrobox {
             ("distrobox-host-exec", vec!["pkexec", "fwupdmgr", "refresh"])
         } else {
             ("pkexec", vec!["fwupdmgr", "refresh"])
         };
 
-        let (update_prog, update_args): (&str, Vec<&str>) = if is_distrobox {
+        let (update_prog, update_args): (&str, Vec<&str>) = if is_flatpak {
+            ("flatpak-spawn", vec!["--host", "pkexec", "fwupdmgr", "update"])
+        } else if is_distrobox {
             ("distrobox-host-exec", vec!["pkexec", "fwupdmgr", "update"])
         } else {
             ("pkexec", vec!["fwupdmgr", "update"])
