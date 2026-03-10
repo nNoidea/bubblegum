@@ -36,15 +36,18 @@ jobs:
         working-directory: ./bubblegum
         run: npm run tauri build -- --bundles appimage,deb,rpm
 
-      - name: Create raw binary archive
+      - name: Strip Versioning from Assets
         working-directory: ./bubblegum/src-tauri/target/release
-        run: tar -czvf bubblegum-linux-x86_64.tar.gz bubblegum
+        run: |
+          mkdir -p release_assets
+          # Copy and rename built assets to remove versions
+          cp bundle/appimage/*.AppImage release_assets/bubblegum.AppImage
+          cp bundle/deb/*.deb release_assets/bubblegum.deb
+          cp bundle/rpm/*.rpm release_assets/bubblegum.rpm
+          # Compress the raw binary
+          tar -czvf release_assets/bubblegum.tar.gz bubblegum
 
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            bubblegum/src-tauri/target/release/bundle/appimage/*.AppImage
-            bubblegum/src-tauri/target/release/bundle/deb/*.deb
-            bubblegum/src-tauri/target/release/bundle/rpm/*.rpm
-            bubblegum/src-tauri/target/release/bubblegum-linux-x86_64.tar.gz
+          files: bubblegum/src-tauri/target/release/release_assets/*
