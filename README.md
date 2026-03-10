@@ -1,5 +1,7 @@
 # 🫧 Bubblegum
 
+> Due to Tauri v2 only supporting up to 60hz on Linux, I am going to rebuild the project in Electron for 120hz. The rebuild will be called Bubblegum 2.
+
 ![Bubblegum](img/app.png)
 
 A unified package manager GUI for Linux. Bubblegum gives you a single dashboard to browse, search, update, and uninstall packages across every package manager on your system.
